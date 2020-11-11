@@ -3,8 +3,8 @@
 import time
 import os.path
 import os
-import ConfigParser
-
+import configparser
+import scapy
 from ast import literal_eval
 
 from pulsar.core import sally
@@ -17,15 +17,58 @@ PARSER_UNIVERSAL = "universal"
 PARSER_SIP = "sip"
 
 
+
+
+
+class DerrickPacket:
+    def __init__(self,packet):
+        if packet.haslayer("IP"):
+            self.src=packet["IP"].src
+            self.dst=packet["IP"].dst
+            self.proto="T"
+            self.ntime=float(packet["IP"].time)
+        if packet.haslayer("TCP"):
+            self.msg=packet["TCP"].payload.original.decode(errors="ignore")
+            #self.msg=self.msg.decode("ascii", 'ignore')
+            #print(self.msg)
+        #print(f"packets\n {self.src} {self.dst}")
+
+    def __str__(self):
+        return " ".join([str(self.ntime), self.proto, self.src, self.dst, self.msg])
+
+    def concat(self, newPacket):
+        assert(self.src == newPacket.src and
+               self.dst == newPacket.dst)
+#               self.proto == newPacket.proto and
+#               self.ntime <= newPacket.ntime
+        self.ntime = newPacket.ntime
+        self.msg += newPacket.msg
+
+
+
+class DerrickReader:
+
+    def __init__(self, pcapFile):
+        self.pcapFile = pcapFile
+        self.messages =[]
+        packets=scapy.all.rdpcap(pcapFile)
+        for p in packets:
+            self.messages.append(DerrickPacket(p))
+        
+
+
+
+
+
 class Harry():
 
-    def __init__(self, drk_file, path_conf):
+    def __init__(self, pcapfile, path_conf):
 
-        self.drk_file = drk_file
+        self.pcap_file = pcapfile
         self.path_conf = path_conf
 
         # open conf file
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         harry_conf = os.path.join(path_conf, "harry.conf")
         config.readfp(open(harry_conf))
 
@@ -37,10 +80,19 @@ class Harry():
         self.timeout = literal_eval(config.get('harry', 'timeout'))
         self.validateSip = literal_eval(config.get('harry', 'validateSip'))
 
-    def generate_prisma_input(self, drk_file):
 
-        (base, _) = os.path.splitext(self.drk_file)
-        dr = DerrickReader(drk_file)
+    def generate_prisma_input(self,pcap_file):
+
+        (base, _) = os.path.splitext(self.pcap_file)
+        #dr = [DerrickPacket(l.rstrip(b"\r\n")) for l in drfile]
+        #
+        dr = DerrickReader(pcap_file)
+
+        #-------------my-modification---------
+        #generate_derrickReaderfromPcap
+
+
+
 
         if self.parser == PARSER_UNIVERSAL:
             pm = PacketMerger(self.step)

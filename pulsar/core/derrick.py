@@ -1,4 +1,4 @@
-from gzip import GzipFile
+import gzip 
 
 
 class DerrickPacket:
@@ -27,14 +27,15 @@ class DerrickReader:
         self.messages = [DerrickPacket(l.rstrip("\r\n")) for l in g]
         g.close()
 
-
+#change to what ever it is
 class DerrickWriter:
 
     def __init__(self, derrickFile):
         self.derrickFile = derrickFile
-
+        print("We are going to file", derrickFile)
     def writePackets(self, messages):
-        g = GzipFile(self.derrickFile, "wb")
+        g = open (self.derrickFile, "w+")
         for m in messages:
-            g.write("%s\n" % str(m))
+            g.write(m.__str__())
+            g.write("\n")
         g.close()

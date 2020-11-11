@@ -22,8 +22,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-from SdpBody import SdpBody
-from types import StringType
+from .SdpBody import SdpBody
+#from types import StringType
 
 b_types = {'application/sdp':SdpBody}
 
@@ -39,7 +39,7 @@ class MsgBody(object):
             self.content = content
         else:
             self.parsed = True
-            if type(cself.content) == StringType:
+            if type(cself.content) == str:
                 self.content = cself.content
             else:
                 self.content = cself.content.getCopy()
@@ -48,14 +48,14 @@ class MsgBody(object):
     def parse(self):
         if not self.parsed:
             self.parsed = True
-            if b_types.has_key(self.mtype):
+            if self.mtype in b_types:
                 self.content = b_types[self.mtype](self.content)
 
     def __str__(self):
         return str(self.content)
 
     def localStr(self, local_addr = None, local_port = None):
-        if type(self.content) == StringType:
+        if type(self.content) == str:
             return self.content
         return self.content.localStr(local_addr, local_port)
 
